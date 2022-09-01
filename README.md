@@ -1,7 +1,3 @@
-# Привет
-
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
-
 ## Для запуска проекта
 
 ### `npm start`
