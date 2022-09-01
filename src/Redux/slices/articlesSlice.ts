@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, current, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 
 export enum rowType {
@@ -6,29 +6,38 @@ export enum rowType {
   ROW = 'row',
 }
 
-interface NewRowData {
-  title: string; // Наименование работ
-  unit: string; // Ед. изм.
-  quantity: number; // Количество
-  unitPrice: number; // Цена за ед.
-  price: number; // Стоимость
-  // parent: number | null; // id уровня, в котором находится (либо null для первого уровня)
-  // type: rowType;
-}
-
-export interface RowData extends NewRowData {
+export interface RowData {
   id: number;
+  title: string;
+  unit: string;
+  quantity: number;
+  unitPrice: number;
+  price: number;
+  parentId: number;
+  type: rowType;
 }
 
 export interface LevelData {
   idLvl: number;
   name: string;
   totalPrice: number;
-  articles: RowData[];
 }
 
-export interface GlobalData {
+export type newLvlData = {
+  value: string;
+  id: number;
+};
+
+export type TotalPriceType = {
+  checkedLvl: number[];
+  checkedRow: number[];
+  totalPrice: number;
+};
+
+interface stateType {
   levels: LevelData[];
+  articles: RowData[];
+  totalPrice: TotalPriceType;
 }
 
 // функция для сохранения строки
@@ -76,24 +85,10 @@ export interface GlobalData {
 //   return changedRows;
 // }
 
-const initialState: GlobalData = {
-  levels: [
-    {
-      idLvl: 1,
-      name: 'Фундаментные работы',
-      totalPrice: 5000,
-      articles: [
-        {
-          id: 1,
-          title: 'Статья работы',
-          unit: 'см',
-          quantity: 3,
-          unitPrice: 228,
-          price: 2283,
-        },
-      ],
-    },
-  ],
+const initialState: stateType = {
+  levels: [],
+  articles: [],
+  totalPrice: { checkedLvl: [], checkedRow: [], totalPrice: 0 },
 };
 
 const articlesSlice = createSlice({
@@ -101,78 +96,62 @@ const articlesSlice = createSlice({
   initialState,
   reducers: {
     setLevel(state) {
-      const idx = state.levels.length + 1;
       state.levels.push({
-        idLvl: idx,
-        name: 'Название по умолчанию',
+        idLvl: state.levels.length + 1,
+        name: 'New level',
         totalPrice: 0,
-        articles: [
-          {
-            id: 1,
-            title: 'Статья работы №1',
-            unit: 'см',
-            quantity: 3,
-            unitPrice: 228,
-            price: 2283,
-          },
-        ],
       });
     },
     setRow(state, action) {
-      const idx = action.payload - 1;
-      const tempArticles = [];
-      tempArticles.push(...state.levels[idx].articles.map((item) => item));
-      let endArticles: RowData[] = [...tempArticles];
-
-      console.log(tempArticles);
-      console.log(endArticles);
-      endArticles.push({
-        id: tempArticles.length + 1,
-        title: 'Статья работы',
-        unit: 'Единица',
-        quantity: 3,
+      state.articles.push({
+        id: state.articles.length + 1,
+        title: 'New article',
+        unit: 'm',
+        quantity: 0,
         unitPrice: 0,
         price: 0,
+        parentId: action.payload,
+        type: rowType.ROW,
       });
-      state.levels = state.levels.map((item) => {
-        if (item.idLvl === idx) {
-          item.idLvl = idx;
-          item.name = state.levels[idx].name;
-          item.totalPrice = state.levels[idx].totalPrice;
-          item.articles = endArticles;
-        }
-      });
-
-      console.log({ endArticles });
     },
-    // clearList(state) {
-    //   state.contacts = [];
-    // },
-    // editContact(state, action: PayloadAction<ContactType>) {
-    //   state.searchCont = state.contacts.map((item) =>
-    //     item.idx === action.payload.idx ? { ...item, name: action.payload.name } : item,
-    //   );
-    // },
-    // delContact(state, action: PayloadAction<number>) {
-    //   state.contacts = state.contacts.filter((obj) => obj.id !== action.payload);
-    // },
-    // стоит доработать, либо убрать отсюда полностью
-    // setSearchValue(state, action: PayloadAction<string>) {
-    //   let check;
-    //   const newCont = state.contacts.filter((elem: ContactType) => {
-    //     elem.name.includes(action.payload);
-    //     check = elem;
-    //   });
-    //   state.searchCont.push(...newCont);
-    //   console.log(action.payload);
-    //   console.log(newCont);
-    //   console.log(check);
-    // },
+    editLevel(state, action: PayloadAction<LevelData>) {
+      const index = action.payload.idLvl - 1;
+      state.levels.splice(index, 1, {
+        idLvl: action.payload.idLvl,
+        name: action.payload.name,
+        totalPrice: action.payload.totalPrice,
+      });
+    },
+    editRow(state, action: PayloadAction<RowData>) {
+      const index = action.payload.id - 1;
+      state.articles.splice(index, 1, {
+        id: action.payload.id,
+        title: action.payload.title,
+        unit: action.payload.unit,
+        quantity: action.payload.quantity,
+        unitPrice: action.payload.unitPrice,
+        price: action.payload.quantity * action.payload.unitPrice,
+        parentId: action.payload.parentId,
+        type: action.payload.type,
+      });
+      const idxParent = action.payload.parentId - 1;
+      let sumLvl = state.levels[idxParent].totalPrice;
+      let sumRow = action.payload.quantity * action.payload.unitPrice;
+      state.levels[idxParent].totalPrice = sumLvl + sumRow;
+      if (
+        !(
+          state.totalPrice.checkedRow.includes(action.payload.id) &&
+          state.totalPrice.checkedLvl.includes(state.levels[idxParent].idLvl)
+        )
+      ) {
+        state.totalPrice.totalPrice = state.totalPrice.totalPrice + sumRow;
+      }
+    },
   },
 });
 
-export const selectArticles = (state: RootState) => state.contact;
+export const selectArticles = (state: RootState) => state.article;
 
-export const { setLevel, setRow } = articlesSlice.actions;
+export const { setLevel, setRow, editLevel, editRow } = articlesSlice.actions;
 
 export default articlesSlice.reducer;

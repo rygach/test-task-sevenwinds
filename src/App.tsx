@@ -1,15 +1,13 @@
-import path from 'path';
 import { useSelector } from 'react-redux';
 import './App.scss';
-import Row from './Components/Row/Row';
 import { SecondLvl } from './Components/SecondLvl/SecondLvl';
-import { selectArticles, setLevel } from './Redux/slices/articlesSlice';
+import { LevelData, selectArticles, setLevel } from './Redux/slices/articlesSlice';
 import { useAppDispatch } from './Redux/store';
 
 function App() {
   const dispatch = useAppDispatch();
 
-  const { levels } = useSelector(selectArticles);
+  const { totalPrice, levels } = useSelector(selectArticles);
 
   const onAddLevel = () => {
     dispatch(setLevel());
@@ -284,15 +282,14 @@ function App() {
                 </svg>
               </div>
               <div className="row-name">Южная строительная площадка</div>
-              <div className="row-total-price">5 000</div>
+              <div className="row-total-price">{totalPrice.totalPrice}</div>
             </div>
-            {levels.map((item) => (
+            {levels.map((item: LevelData) => (
               <SecondLvl
                 key={item.idLvl}
                 idLvl={item.idLvl}
                 name={item.name}
                 totalPrice={item.totalPrice}
-                articles={item.articles}
               />
             ))}
           </div>

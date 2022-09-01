@@ -6,6 +6,10 @@
   font-family: 'Roboto', sans-serif;
 }
 
+button {
+  display: none;
+}
+
 .header {
   width: 100%;
   background-color: #27272a;
@@ -166,7 +170,9 @@
             border: 1px solid #414144;
             border-radius: 5px;
             padding: 10px;
-            margin-left: 10px;
+          }
+          .hidden {
+            display: none;
           }
         }
         .row-unit {
@@ -179,7 +185,9 @@
             border: 1px solid #414144;
             border-radius: 5px;
             padding: 10px;
-            margin-left: 10px;
+          }
+          .hidden {
+            display: none;
           }
         }
         .row-count {

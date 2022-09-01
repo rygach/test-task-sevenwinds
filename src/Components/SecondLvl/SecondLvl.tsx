@@ -1,18 +1,46 @@
-import React from 'react';
-import { LevelData, setRow } from '../../Redux/slices/articlesSlice';
+import { current } from '@reduxjs/toolkit';
+import React, { useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import {
+  editLevel,
+  LevelData,
+  rowType,
+  selectArticles,
+  setRow,
+} from '../../Redux/slices/articlesSlice';
 import { useAppDispatch } from '../../Redux/store';
 import Row from '../Row/Row';
 
-export const SecondLvl: React.FC<LevelData> = ({ idLvl, name, totalPrice, articles }) => {
+export const SecondLvl: React.FC<LevelData> = ({ idLvl, name, totalPrice }) => {
   const dispatch = useAppDispatch();
+  const valInp = useRef<HTMLInputElement>(null);
+  const { articles } = useSelector(selectArticles);
+  const [showInput, setShowInput] = useState(false);
 
   const onAddRow = () => {
     dispatch(setRow(idLvl));
   };
 
+  const goEditForm = () => {
+    setShowInput(true);
+  };
+
+  const onEditLevel = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (valInp.current?.value) {
+      const changed: LevelData = {
+        idLvl: idLvl,
+        name: valInp.current?.value.toString(),
+        totalPrice: totalPrice,
+      };
+      dispatch(editLevel(changed));
+    }
+    setShowInput(false);
+  };
+
   return (
     <>
-      <form className="row-item" action="">
+      <form onDoubleClick={goEditForm} className="row-item" onSubmit={onEditLevel}>
         <div className="row-lvl">
           <svg
             width="20"
@@ -42,23 +70,33 @@ export const SecondLvl: React.FC<LevelData> = ({ idLvl, name, totalPrice, articl
           </svg>
         </div>
         <div className="row-name">
-          {name} <input className="row-name-inp" type="text" placeholder="Наименование" />
+          <p className={!showInput ? '' : 'hidden'}>{name}</p>
+          <input
+            ref={valInp}
+            className={showInput ? 'row-name-inp' : 'row-name-inp hidden'}
+            type="text"
+            placeholder="Наименование"
+          />
         </div>
         <div className="row-total-price">{totalPrice}</div>
       </form>
-      {articles.map((item) => (
-        <Row
-          key={item.id}
-          id={item.id}
-          title={item.title}
-          unit={item.unit}
-          quantity={item.quantity}
-          unitPrice={item.unitPrice}
-          price={item.price}
-          parent={item.parent}
-          type={item.type}
-        />
-      ))}
+      {articles.map((item) => {
+        if (item.parentId === idLvl) {
+          return (
+            <Row
+              key={item.id}
+              id={item.id}
+              title={item.title}
+              unit={item.unit}
+              quantity={item.quantity}
+              unitPrice={item.unitPrice}
+              price={item.price}
+              parentId={idLvl}
+              type={rowType.ROW}
+            />
+          );
+        }
+      })}
     </>
   );
 };
