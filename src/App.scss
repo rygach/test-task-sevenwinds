@@ -160,6 +160,25 @@ button {
           :nth-child(n) {
             margin-right: 10px;
           }
+          .second-lvl-img {
+            margin-left: 20px;
+          }
+          .second-lvl-img::after {
+            margin: 0 auto;
+            display: block;
+            position: absolute;
+            top: 5px;
+            width: 75.375px;
+            height: 50px;
+            background-color: red;
+            content: '';
+          }
+          .article-img {
+            margin-left: 40px;
+          }
+          .hidden {
+            display: none;
+          }
         }
         .row-name {
           display: flex;
